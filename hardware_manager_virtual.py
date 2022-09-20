@@ -1,53 +1,73 @@
-"""Модуль для работы с аппаратной частью стойки HV
+"""Модуль для работы с аппаратной частью стойки HV 
 """
 # TODO: переделать в класс
 
 import asyncio
+from logging import Logger
+from random import random
 
-from utils.hub import Hub
+from manager import HardwareManager
 
-INPUT = asyncio.Queue()
+class HVManagerVirtual(HardwareManager):
 
-OUTPUT = Hub()
+    __CHANGE_SPEED = 100
 
-async def routine():
-    """AAAA"""
-    message_coro =  asyncio.create_task(__process_message__())
-    monitor_coro = asyncio.create_task(__monitor_voltage__())
+    def __init__(self, logger: Logger):
+        super().__init__()
+        self.__logger = logger
+        self.__curr_voltage = 0
+        self.__desired_voltage = 0
+
+        self.__message_coro =  None
+        self.__monitor_coro = None
+
+    async def __process_message(self):
+        while True:
+            try:
+                message = await self.input.get()
+                self.__logger.debug(message)
+                meta = message['meta']
+                if(meta['command_type'] == 'set_voltage'):
+                    self.__desired_voltage = float(meta['voltage'])
+                    self.__logger.debug(f'setting {self.__desired_voltage}')
+                else:
+                    self.__logger.debug(meta)
+            except asyncio.CancelledError as exc:
+                raise exc
+            except Exception as exc:
+                self.__logger.exception(exc)
 
 
-__curr_voltage__ = 0
-__desired_voltage__ = 0
-__CHANGE_SPEED_ = 100
-async def __process_message__():
-    while True:
-        message = await INPUT.get()
-        header = message['header']
-        meta = message['meta']
-        data = message['data']
-        if(meta['command_type'] == 'set_voltage'):
-            global __desired_voltage__
-            __desired_voltage__ = float(meta['voltage'])
-            print(f'setting {__desired_voltage__}')
-        else:
-            print(meta)
+    async def __monitor_voltage(self):
+        while True:
+            try:
+                self.__logger.debug(f'curr: {self.__curr_voltage}, desired: {self.__desired_voltage}')
+                self.output.publish(dict(meta=dict(
+                        type='answer',
+                        answer_type='get_voltage',
+                        block=1,
+                        voltage=self.__curr_voltage
+                ), data=b''))
 
+                await asyncio.sleep(5)
+                sign = 1 if self.__desired_voltage > self.__curr_voltage else -1
+                delta = abs(self.__curr_voltage - self.__desired_voltage)
 
-async def __monitor_voltage__():
-    while True:
-        global __curr_voltage__
+                self.__curr_voltage += sign * min(HVManagerVirtual.__CHANGE_SPEED * 5, delta) + (random() - 0.5) * 2.0
+            except asyncio.CancelledError as exc:
+                raise exc
+            except Exception as exc:
+                self.__logger.exception(exc)
 
-        print(f'curr: {__curr_voltage__}, desired: {__desired_voltage__}')
-        # dfparser.create_message.send_message()
-        OUTPUT.publish(dict(meta=dict(
-                type='answer',
-                answer_type='get_voltage',
-                block=1,
-                voltage=__curr_voltage__
-        ), data=b''))
+    async def start(self):
+        self.__message_coro =  asyncio.create_task(self.__process_message())
+        self.__monitor_coro = asyncio.create_task(self.__monitor_voltage())
 
-        await asyncio.sleep(5)
-        sign = 1 if __desired_voltage__ > __curr_voltage__ else -1
-        delta = abs(__curr_voltage__ - __desired_voltage__)
+    async def stop(self):
+        if self.__message_coro:
+            self.__message_coro.cancel()
+            self.__message_coro = None
 
-        __curr_voltage__ += sign * min(__CHANGE_SPEED_ * 5, delta)
+        if self.__monitor_coro:
+            self.__monitor_coro.cancel()
+            self.__monitor_coro = None

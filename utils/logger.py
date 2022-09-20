@@ -16,7 +16,7 @@ def init_logger(args):
     else:
         stream_handler.setLevel(logging.WARNING)
 
-    fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    fmt = '[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s'
     formatter = logging.Formatter(fmt)
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
