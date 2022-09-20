@@ -9,6 +9,7 @@ dftcp = ">=0.0.3"
 asyncio = ">=3.4.3"
 pyvisa = "*"
 ipython = "*"
+aiohttp = ">=3.8.1"
 
 [dev-packages]
 

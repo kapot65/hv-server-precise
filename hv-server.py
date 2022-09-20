@@ -7,7 +7,8 @@ from logging import Logger
 import dfparser
 from aiohttp import web, WSMsgType
 
-from hardware_manager_virtual import HVManagerVirtual as HVManager
+# from hardware_manager_virtual import HVManagerVirtual as HVManager
+from hardware_manager import HVManager
 from manager import HardwareManager
 from utils.cli import parse_args
 from utils.logger import init_logger
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        print("Programm stoped by user input")
+        logger.info("Programm stoped by user input")
 
 
     loop.run_until_complete(manager.stop())
