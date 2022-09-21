@@ -1,27 +1,23 @@
+"""HV server logging module."""
 import logging
+from config import LOG_FILE, LOG_LEVEL, LOGGER_NAME
 
-def init_logger(args):
-    logger = logging.getLogger('rsh_server')
-    logger.setLevel(logging.DEBUG)
+def init_logger() -> None:
+    """Initialize HV server logger."""
 
-    file_handler = logging.FileHandler(args.logfile)
-    if args.verbose:
-        file_handler.setLevel(logging.DEBUG)
-    else:
-        file_handler.setLevel(logging.INFO)
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(LOG_LEVEL)
+
+    file_handler = logging.FileHandler(LOG_FILE)
+    file_handler.setLevel(LOG_LEVEL)
 
     stream_handler = logging.StreamHandler()
-    if args.verbose:
-        stream_handler.setLevel(logging.DEBUG)
-    else:
-        stream_handler.setLevel(logging.WARNING)
+    stream_handler.setLevel(LOG_LEVEL)
 
     fmt = '[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s'
     formatter = logging.Formatter(fmt)
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
-    
+
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
-    
-    return logger

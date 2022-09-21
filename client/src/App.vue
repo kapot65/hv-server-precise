@@ -24,11 +24,14 @@ const socketOnline = ref(false);
 
 function url(s) {
   let l = window.location;
-  return ((l.protocol === "https:") ? "wss://" : "ws://") + l.host + l.pathname + s;
+  return (
+    (l.protocol === "https:" ? "wss://" : "ws://") + l.host + l.pathname + s
+  );
 }
 
 // TODO: move into function (reconnect)
 let socket = new WebSocket(url("channel"));
+// let socket = new WebSocket("ws://localhost:8080/channel");
 
 socket.onopen = () => {
   if (socket.readyState === 1) {
@@ -51,15 +54,14 @@ function setVoltage(voltage) {
     JSON.stringify({
       type: "command",
       command_type: "set_voltage",
-      block: 1,
-      voltage,
+      block: "1",
+      voltage: Number(voltage),
     })
   );
 }
 
-socket.onmessage = ev => {
+socket.onmessage = (ev) => {
   let message = JSON.parse(ev.data);
-  console.log(message);
   socketStore.putMessage(message);
 };
 
@@ -75,9 +77,10 @@ const plotData = computed(() => {
       msg.message.block === 1
   );
 
-  return [{
-      x: getVoltageMessages.map(t => t.time),
-      y: getVoltageMessages.map(t => t.message.voltage),
+  return [
+    {
+      x: getVoltageMessages.map((t) => t.time),
+      y: getVoltageMessages.map((t) => t.message.voltage),
       type: "scatter",
     }]
   }
@@ -119,17 +122,22 @@ const plotData = computed(() => {
         <ion-row>
           <ion-col>
             <h3>
-              {{ plotData[0].y.length === 0? '---' : plotData[0].y[[plotData[0].y.length - 1]].toFixed(5) }} V
+              {{
+                plotData[0].y.length === 0
+                  ? "---"
+                  : plotData[0].y[[plotData[0].y.length - 1]].toFixed(5)
+              }}
+              V
             </h3>
           </ion-col>
           <ion-col>
             <ion-item>
-              <ion-input
-                v-model="desiredVoltage"
-                type="number"
-                inputmode="numeric"
-              />
-              <ion-button @click="setVoltage(desiredVoltage)">Set</ion-button>
+              <ion-input v-model="desiredVoltage" />
+              <ion-button
+                :disabled="isNaN(desiredVoltage)"
+                @click="setVoltage(desiredVoltage)"
+                >Set</ion-button
+              >
             </ion-item>
           </ion-col>
           <ion-col></ion-col>
@@ -169,5 +177,4 @@ ion-col {
   border: solid 1px #ddd;
   padding: 10px;
 }
-
 </style>
