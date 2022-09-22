@@ -6,7 +6,7 @@ from logging import getLogger
 
 import jsonschema
 
-from config import AGILENT_34401A_GPIB_ADDR, LOGGER_NAME, VIRTUAL_MODE
+from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, HV_SCALING_COEFFICIENT, LOGGER_NAME, VIRTUAL_MODE
 from utils.manager import HardwareManager
 
 if VIRTUAL_MODE:
@@ -28,7 +28,9 @@ class HVManager(HardwareManager):
             self.__desired_voltage = 0.0
             self.__calc_next_coro = None
         else:
+            self.__resource_mgr = visa.ResourceManager()
             self.__agilent_gpib = None
+            self.__fluke_gpib = None
 
         self.last_voltage = 0.0
         
@@ -41,9 +43,7 @@ class HVManager(HardwareManager):
         else:
             _logger.debug('Initialize Agilent 34401A')
             try:
-                # Create a connection (session) to the instrument
-                resource_mgr = visa.ResourceManager()
-                self.__agilent_gpib = resource_mgr.open_resource(AGILENT_34401A_GPIB_ADDR)
+                self.__agilent_gpib = self.__resource_mgr.open_resource(AGILENT_34401A_GPIB_ADDR)
             except visa.Error:
                 _logger.error('Couldn\'t connect to \'%s\', exiting now...', AGILENT_34401A_GPIB_ADDR)
                 sys.exit() # TODO: change to adequate exit
@@ -70,7 +70,7 @@ class HVManager(HardwareManager):
         if VIRTUAL_MODE:
             _logger.debug('Virtual voltmeter stopped')
         else:
-            # TODO: добавить вычитку (чтобы вольтметр не пищал при след. запуске)
+            self.__agilent_gpib.read()
             _logger.debug('Agilent 34401A stopped')
 
     async def __init_fluke_5200e(self):
@@ -87,7 +87,18 @@ class HVManager(HardwareManager):
                             (random() - 0.5)
             self.__calc_next_coro = asyncio.create_task(calc_next_voltage())
         else:
-            _logger.warning("__init_fluke_5200e is not implemeted for real device")
+            _logger.debug('Initialize Fluke 5502E')
+            try:
+                self.__fluke_gpib = self.__resource_mgr.open_resource(FLUKE_5502E_GPIB_ADDR)
+            except visa.Error:
+                _logger.error('Couldn\'t connect to \'%s\', exiting now...', FLUKE_5502E_GPIB_ADDR)
+                sys.exit() # TODO: change to adequate exit
+
+            _logger.debug("OPER")
+            self.__fluke_gpib.write("OPER")
+            await asyncio.sleep(2)
+
+            _logger.debug("Fluke 5502E initialization done")
 
     async def __stop_fluke_5200e(self):
         if VIRTUAL_MODE:
@@ -103,7 +114,8 @@ class HVManager(HardwareManager):
         if VIRTUAL_MODE:
             self.__desired_voltage = voltage
         else:
-            _logger.warning("set_voltage is not implemeted for real device")
+            self.__fluke_gpib.write(f'OUT {voltage / HV_SCALING_COEFFICIENT} V')
+            await asyncio.sleep(2)
 
     async def __get_voltage(self) -> float:
         if VIRTUAL_MODE:
@@ -113,7 +125,7 @@ class HVManager(HardwareManager):
             self.__agilent_gpib.write('READ?')
             await asyncio.sleep(4)
             voltage = float(self.__agilent_gpib.read())
-            return voltage
+            return voltage * DIVIDER_FACTOR
 
     async def __wait_voltage(self, voltage, max_error):
         while True:
@@ -201,10 +213,8 @@ class HVManager(HardwareManager):
                 _logger.exception(exc)
 
     async def start(self):
-
         await self.__init__agilent_34401a()
         await self.__init_fluke_5200e()
-
         self.__message_coro =  asyncio.create_task(self.__process_message())
         self.__monitor_coro = asyncio.create_task(self.__monitor_voltage())
 

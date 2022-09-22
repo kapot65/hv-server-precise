@@ -10,6 +10,7 @@ asyncio = ">=3.4.3"
 pyvisa = "*"
 ipython = "*"
 aiohttp = ">=3.8.1"
+jsonschema = ">=4.16.0"
 
 [dev-packages]
 

@@ -8,6 +8,12 @@ LOG_LEVEL = _DEBUG
 VIRTUAL_MODE = True
 
 AGILENT_34401A_GPIB_ADDR = 'GPIB::20::INSTR'
+FLUKE_5502E_GPIB_ADDR = 'GPIB::4::INSTR'
+
+# Коэффициент перевода напряжения с Fluke -> FuG35000
+HV_SCALING_COEFFICIENT = 3500.0
+# Множитель делителя
+DIVIDER_FACTOR = 3500.0
 
 # переписывание параметров из локального конфига (config_local.py)
 try:
