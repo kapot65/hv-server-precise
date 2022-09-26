@@ -6,8 +6,9 @@ from logging import getLogger
 
 import jsonschema
 
-from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, HV_SCALING_COEFFICIENT, LOGGER_NAME, VIRTUAL_MODE
+from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, LOGGER_NAME, VIRTUAL_MODE
 from utils.manager import HardwareManager
+from utils.scale import rescale_voltage
 
 if VIRTUAL_MODE:
     from random import random
@@ -117,7 +118,7 @@ class HVManager(HardwareManager):
             self.__desired_voltage = voltage
             await asyncio.sleep(2)
         else:
-            self.__fluke_gpib.write(f'OUT {voltage / HV_SCALING_COEFFICIENT} V')
+            self.__fluke_gpib.write(f'OUT {rescale_voltage(voltage)} V')
             await asyncio.sleep(2)
 
     async def __get_voltage(self) -> float:

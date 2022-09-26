@@ -5,13 +5,15 @@ import sys
 
 from tqdm import tqdm
 
+from utils.scale import rescale_voltage
+
 sys.path.append('./')
 
 import pyvisa as visa
 
 import csv
 from utils.logger import init_logger
-from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, HV_SCALING_COEFFICIENT, LOGGER_NAME
+from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, LOGGER_NAME
 
 
 __voltage = 0
@@ -64,12 +66,13 @@ async def fluke_loop():
             writer.writeheader()
             with tqdm(range(0, 18000, 1000), total=18) as t:
                 for voltage in t:
+                    voltage_scaled = rescale_voltage(voltage)
                     writer.writerow({
                         'timestamp': datetime.now().isoformat(),
                         'voltage': voltage,
-                        'voltage_scaled': voltage / HV_SCALING_COEFFICIENT
+                        'voltage_scaled': voltage_scaled
                     })
-                    fluke_gpib.write(f'OUT {voltage / HV_SCALING_COEFFICIENT} V')
+                    fluke_gpib.write(f'OUT {voltage_scaled} V')
                     for _ in range(180//5):
                         t.set_description(f'{voltage}:{__voltage * DIVIDER_FACTOR}', refresh=True)
                         await asyncio.sleep(5)
