@@ -2,5 +2,6 @@
     "python.linting.pylintArgs": [
         "--init-hook",
         "import sys; sys.path.insert(0, './')"
-    ]
+    ],
+    "cSpell.language": "en,ru"
 }

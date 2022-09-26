@@ -4,3 +4,7 @@ asyncio>=3.4.3
 aiohttp>=3.8.1
 ipython>=8.5.0
 jsonschema>=4.16.0
+tqdm>=4.64.1
+#plotly
+#pandas
+#numpy
