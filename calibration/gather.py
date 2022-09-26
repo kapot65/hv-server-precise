@@ -32,14 +32,19 @@ async def agilent_loop():
         agilent_gpib.write("VOLT:NPLC 100")
         await asyncio.sleep(1)
 
-        with open('voltage.csv', 'w') as csvfile:
-            spamwriter = csv.writer(csvfile, dialect="excel")
+        with open('voltage.csv', 'w', newline='') as csvfile:
+            fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
+            writer.writeheader()
             while True:
                 global __voltage
                 agilent_gpib.write('READ?')
                 await asyncio.sleep(4)
                 __voltage = float(agilent_gpib.read())
-                spamwriter.writerow([datetime.now(), __voltage])
+                writer.writerow({
+                        'timestamp': datetime.now().isoformat(), 
+                        'voltage': __voltage,
+                })
 
     except visa.Error:
         sys.exit() # TODO: change to adequate exit
@@ -53,11 +58,17 @@ async def fluke_loop():
         fluke_gpib.write("OPER")
         await asyncio.sleep(2)
 
-        with open('voltage_sets.csv', 'w') as csvfile:
-            spamwriter = csv.writer(csvfile, dialect="excel")
+        with open('voltage_sets.csv', 'w', newline='') as csvfile:
+            fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
+            writer.writeheader()
             with tqdm(range(0, 18000, 1000), total=18) as t:
                 for voltage in t:
-                    spamwriter.writerow([datetime.now().isoformat(), voltage, voltage / HV_SCALING_COEFFICIENT])
+                    writer.writerow({
+                        'timestamp': datetime.now().isoformat(),
+                        'voltage': voltage,
+                        'voltage_scaled': voltage / HV_SCALING_COEFFICIENT
+                    })
                     fluke_gpib.write(f'OUT {voltage / HV_SCALING_COEFFICIENT} V')
                     for _ in range(180//5):
                         t.set_description(f'{voltage}:{__voltage * DIVIDER_FACTOR}', refresh=True)
@@ -72,5 +83,3 @@ if __name__ == "__main__":
     agilent_coro = loop.create_task(agilent_loop())
     loop.run_until_complete(fluke_loop())
     agilent_coro.cancel()
-
-
