@@ -58,11 +58,15 @@ async def fluke_loop():
         fluke_gpib.write("OPER")
         await asyncio.sleep(2)
 
+        print('wait 30s to leave HV unit')
+        await asyncio.sleep(30)
+        print('start gathering data')
+
         with open('voltage_sets.csv', 'w', newline='') as csvfile:
             fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
             writer.writeheader()
-            with tqdm(range(0, 18000, 1000), total=18) as t:
+            with tqdm(list(range(0, 18000, 1000))) as t:
                 for voltage in t:
                     writer.writerow({
                         'timestamp': datetime.now().isoformat(),
@@ -70,7 +74,7 @@ async def fluke_loop():
                         'voltage_scaled': voltage / HV_SCALING_COEFFICIENT
                     })
                     fluke_gpib.write(f'OUT {voltage / HV_SCALING_COEFFICIENT} V')
-                    for _ in range(180//5):
+                    for _ in range(600//5):
                         t.set_description(f'{voltage}:{__voltage * DIVIDER_FACTOR}', refresh=True)
                         await asyncio.sleep(5)
     except visa.Error:
