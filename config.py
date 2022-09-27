@@ -1,20 +1,26 @@
 """Конфигурационный файл для сервера HV"""
 from logging import DEBUG as _DEBUG
 
-LOGGER_NAME = 'hv_server'
+LOGGER_NAME: str = 'hv_server'
 LOG_FILE: str = './hv_server.log'
 LOG_LEVEL = _DEBUG
 
-VIRTUAL_MODE = True
+VIRTUAL_MODE: bool = True
 
-AGILENT_34401A_GPIB_ADDR = 'GPIB::20::INSTR'
-FLUKE_5502E_GPIB_ADDR = 'GPIB::4::INSTR'
+AGILENT_34401A_GPIB_ADDR: str = 'GPIB::20::INSTR'
+FLUKE_5502E_GPIB_ADDR: str = 'GPIB::4::INSTR'
 
 # Коэффициент перевода напряжения с Fluke -> FuG35000
-HV_SCALING_COEFFICIENT_A = 3501.22
-HV_SCALING_COEFFICIENT_B = 1.1485
+HV_SCALING_COEFFICIENT_A: float = 3501.22
+HV_SCALING_COEFFICIENT_B: float = 1.1485
 # Множитель делителя
-DIVIDER_FACTOR = -4051.330
+DIVIDER_FACTOR: float = -4051.330
+
+TCP_INTERFACE_HOST: str = "0.0.0.0"
+TCP_INTERFACE_PORT: int = 5555
+
+WEB_INTERFACE_HOST: str = "0.0.0.0"
+WEB_INTERFACE_PORT: int = 8080
 
 # переписывание параметров из локального конфига (config_local.py)
 try:
