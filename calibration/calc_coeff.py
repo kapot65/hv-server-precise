@@ -12,7 +12,7 @@ sys.path.append('./')
 
 from config import DIVIDER_FACTOR
 
-PATH = "./calibration-data/26.09.2022"
+PATH = "./calibration-data/29.11.2022"
 
 output_voltages = list(
     (parse(row['timestamp']), 

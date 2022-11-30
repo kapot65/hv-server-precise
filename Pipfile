@@ -12,6 +12,9 @@ ipython = "*"
 aiohttp = ">=3.8.1"
 jsonschema = ">=4.16.0"
 tqdm = "*"
+pexpect = "*"
+plotly = "*"
+pandas = "*"
 
 [dev-packages]
 
