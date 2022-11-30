@@ -17,6 +17,8 @@ from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_AD
 
 __voltage = 0
 
+PATH = "./calibration-data/29.11.2022"
+
 async def agilent_loop():
     try:
         resource_mgr = visa.ResourceManager()
@@ -33,7 +35,7 @@ async def agilent_loop():
         agilent_gpib.write("VOLT:NPLC 100")
         await asyncio.sleep(1)
 
-        with open('./calibration-data/27.09.2022/voltage.csv', 'w', newline='') as csvfile:
+        with open(f'{PATH}/voltage.csv', 'w', newline='') as csvfile:
             fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
             writer.writeheader()
@@ -63,11 +65,11 @@ async def fluke_loop():
         await asyncio.sleep(30)
         print('start gathering data')
 
-        with open('./calibration-data/27.09.2022/voltage_sets.csv', 'w', newline='') as csvfile:
+        with open(f'{PATH}/voltage_sets.csv', 'w', newline='') as csvfile:
             fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
             writer.writeheader()
-            with tqdm(list(range(0, 18000, 3500))) as t:
+            with tqdm(list(range(0, 20000, 1000))) as t:
                 for voltage in t:
                     voltage_scaled = rescale_voltage(voltage)
                     writer.writerow({
@@ -76,7 +78,7 @@ async def fluke_loop():
                         'voltage_scaled': voltage_scaled
                     })
                     fluke_gpib.write(f'OUT {voltage_scaled} V')
-                    for _ in range(2400//5):
+                    for _ in range(60 * 10 //5):
                         t.set_description(f'{voltage}:{__voltage * DIVIDER_FACTOR}', refresh=True)
                         await asyncio.sleep(5)
     except visa.Error:
