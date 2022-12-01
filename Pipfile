@@ -15,6 +15,7 @@ tqdm = "*"
 pexpect = "*"
 plotly = "*"
 pandas = "*"
+pysimplegui = "*"
 
 [dev-packages]
 
