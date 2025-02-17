@@ -1,17 +1,20 @@
 """Конфигурационный файл для сервера HV."""
+
 from logging import DEBUG as _DEBUG
 
-LOGGER_NAME: str = 'hv_server'
-LOG_FILE: str = './hv_server.log'
+LOGGER_NAME: str = "hv_server"
+LOG_FILE: str = "./hv_server.log"
 LOG_LEVEL = _DEBUG
 
-DATA_ROOT: str = './data'
+DATA_ROOT: str = "./data"
 
 VIRTUAL_MODE: bool = True
-VIRTUAL_CHANGE_SPEED: int = 200 # скорость изменения напряжения в виртуальном режиме, В/сек
+VIRTUAL_CHANGE_SPEED: int = (
+    200  # скорость изменения напряжения в виртуальном режиме, В/сек
+)
 
-AGILENT_34401A_GPIB_ADDR: str = 'GPIB::20::INSTR'
-FLUKE_5502E_GPIB_ADDR: str = 'GPIB::4::INSTR'
+AGILENT_34401A_GPIB_ADDR: str = "GPIB::20::INSTR"
+FLUKE_5502E_GPIB_ADDR: str = "GPIB::4::INSTR"
 
 # Коэффициент перевода напряжения с Fluke -> FuG35000
 HV_SCALING_COEFFICIENT_A: float = 3500.5048

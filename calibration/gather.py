@@ -1,23 +1,27 @@
 import asyncio
-from datetime import datetime
-from logging import getLogger
 import sys
+from datetime import datetime
 
 from tqdm import tqdm
 
-sys.path.append('./')
+sys.path.append("./")
+
+import csv
 
 import pyvisa as visa
 
-import csv
+from config import (
+    AGILENT_34401A_GPIB_ADDR,
+    DIVIDER_FACTOR,
+    FLUKE_5502E_GPIB_ADDR,
+)
 from utils.logger import init_logger
 from utils.scale import rescale_voltage
-from config import AGILENT_34401A_GPIB_ADDR, DIVIDER_FACTOR, FLUKE_5502E_GPIB_ADDR, LOGGER_NAME
-
 
 __voltage = 0
 
 PATH = "./calibration-data/29.11.2022"
+
 
 async def agilent_loop():
     try:
@@ -35,22 +39,24 @@ async def agilent_loop():
         agilent_gpib.write("VOLT:NPLC 100")
         await asyncio.sleep(1)
 
-        with open(f'{PATH}/voltage.csv', 'w', newline='') as csvfile:
-            fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
+        with open(f"{PATH}/voltage.csv", "w", newline="") as csvfile:
+            fieldnames = ["timestamp", "voltage", "voltage_scaled"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
             writer.writeheader()
             while True:
                 global __voltage
-                agilent_gpib.write('READ?')
+                agilent_gpib.write("READ?")
                 await asyncio.sleep(4)
                 __voltage = float(agilent_gpib.read())
-                writer.writerow({
-                        'timestamp': datetime.now().isoformat(), 
-                        'voltage': __voltage,
-                })
+                writer.writerow(
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "voltage": __voltage,
+                    }
+                )
 
     except visa.Error:
-        sys.exit() # TODO: change to adequate exit
+        sys.exit()  # TODO: change to adequate exit
 
 
 async def fluke_loop():
@@ -61,32 +67,36 @@ async def fluke_loop():
         fluke_gpib.write("OPER")
         await asyncio.sleep(2)
 
-        print('wait 30s to leave HV unit')
+        print("wait 30s to leave HV unit")
         await asyncio.sleep(30)
-        print('start gathering data')
+        print("start gathering data")
 
-        with open(f'{PATH}/voltage_sets.csv', 'w', newline='') as csvfile:
-            fieldnames = ['timestamp', 'voltage', 'voltage_scaled']
+        with open(f"{PATH}/voltage_sets.csv", "w", newline="") as csvfile:
+            fieldnames = ["timestamp", "voltage", "voltage_scaled"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, dialect="unix")
             writer.writeheader()
             with tqdm(list(range(0, 20000, 1000))) as t:
                 for voltage in t:
                     voltage_scaled = rescale_voltage(voltage)
-                    writer.writerow({
-                        'timestamp': datetime.now().isoformat(),
-                        'voltage': voltage,
-                        'voltage_scaled': voltage_scaled
-                    })
-                    fluke_gpib.write(f'OUT {voltage_scaled} V')
-                    for _ in range(60 * 10 //5):
-                        t.set_description(f'{voltage}:{__voltage * DIVIDER_FACTOR}', refresh=True)
+                    writer.writerow(
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "voltage": voltage,
+                            "voltage_scaled": voltage_scaled,
+                        }
+                    )
+                    fluke_gpib.write(f"OUT {voltage_scaled} V")
+                    for _ in range(60 * 10 // 5):
+                        t.set_description(
+                            f"{voltage}:{__voltage * DIVIDER_FACTOR}", refresh=True
+                        )
                         await asyncio.sleep(5)
     except visa.Error:
-        sys.exit() # TODO: change to adequate exit
+        sys.exit()  # TODO: change to adequate exit
 
 
 if __name__ == "__main__":
-    init_logger()
+    init_logger("gather")
     loop = asyncio.new_event_loop()
     agilent_coro = loop.create_task(agilent_loop())
     loop.run_until_complete(fluke_loop())

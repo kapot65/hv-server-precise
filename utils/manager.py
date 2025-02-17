@@ -1,10 +1,11 @@
 """Hardware manager abstract class."""
+
 import asyncio
 
 from utils.hub import Hub
 
 
-class HardwareManager():
+class HardwareManager:
     """Class for hardware logic class."""
 
     def __init__(self):
@@ -32,11 +33,11 @@ class HardwareManager():
 
         This method should contains initialization and processing routine logic.
         """
-        raise NotImplementedError(f'define method start in {self.__class__.__name__}')
+        raise NotImplementedError(f"define method start in {self.__class__.__name__}")
 
     async def stop(self):
         """Called on server shutdown.
 
         This method should contains logic for graceful shutdown.
         """
-        raise NotImplementedError(f'define method stop in {self.__class__.__name__}')
+        raise NotImplementedError(f"define method stop in {self.__class__.__name__}")

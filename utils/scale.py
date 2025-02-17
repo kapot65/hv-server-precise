@@ -1,6 +1,7 @@
 """Rescaling functions."""
-from config import HV_SCALING_COEFFICIENT_A as A, \
-    HV_SCALING_COEFFICIENT_B as B
+
+from config import HV_SCALING_COEFFICIENT_A as A
+from config import HV_SCALING_COEFFICIENT_B as B
 
 
 def rescale_voltage(voltage: float):

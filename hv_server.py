@@ -1,18 +1,17 @@
 """Скрипт запуска сервера стойки HV."""
+
 import asyncio
 from functools import partial
 from logging import getLogger
 
 from config import LOGGER_NAME, TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
-
+from hv_manager import HVManager
 from utils.logger import init_logger
 from utils.transport.socket import socket_handler
 from utils.transport.websocket import init_web
-from hv_manager import HVManager
 
 if __name__ == "__main__":
-
-    init_logger()
+    init_logger(LOGGER_NAME)
     _logger = getLogger(LOGGER_NAME)
     manager = HVManager()
 
@@ -22,12 +21,11 @@ if __name__ == "__main__":
 
     server = loop.run_until_complete(
         asyncio.start_server(
-            partial(socket_handler, mgr=manager),
-            TCP_INTERFACE_HOST, TCP_INTERFACE_PORT)
+            partial(socket_handler, mgr=manager), TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
         )
+    )
     _logger.info(
-        "Start TCP/IP interface on %s:%i",
-        TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
+        "Start TCP/IP interface on %s:%i", TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
     )
     ws_server = loop.run_until_complete(init_web(manager))
 

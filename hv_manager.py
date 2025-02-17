@@ -1,13 +1,24 @@
 """Модуль для работы с аппаратной частью стойки HV."""
+
 import asyncio
-import sys
 import json
+import sys
 from logging import getLogger
 
 import jsonschema
 
-from config import AGILENT_34401A_GPIB_ADDR as AGILENT_ADDR, DIVIDER_FACTOR, \
-    FLUKE_5502E_GPIB_ADDR as FLUKE_ADDR, LOGGER_NAME, VIRTUAL_MODE, VIRTUAL_CHANGE_SPEED
+from config import (
+    AGILENT_34401A_GPIB_ADDR as AGILENT_ADDR,
+)
+from config import (
+    DIVIDER_FACTOR,
+    LOGGER_NAME,
+    VIRTUAL_CHANGE_SPEED,
+    VIRTUAL_MODE,
+)
+from config import (
+    FLUKE_5502E_GPIB_ADDR as FLUKE_ADDR,
+)
 from utils.manager import HardwareManager
 from utils.scale import rescale_voltage as scale
 
@@ -45,16 +56,13 @@ class HVManager(HardwareManager):
 
     async def __init__agilent_34401a(self):
         if VIRTUAL_MODE:
-            _logger.debug('Initialize voltmeter in virtual mode')
+            _logger.debug("Initialize voltmeter in virtual mode")
         else:
-            _logger.debug('Initialize Agilent 34401A')
+            _logger.debug("Initialize Agilent 34401A")
             try:
-                self.__agilent = self.__visa_mgr.open_resource(
-                    AGILENT_ADDR)
+                self.__agilent = self.__visa_mgr.open_resource(AGILENT_ADDR)
             except visa.Error:
-                _logger.error(
-                    'Couldn\'t connect to \'%s\', exiting now...',
-                    AGILENT_ADDR)
+                _logger.error("Couldn't connect to '%s', exiting now...", AGILENT_ADDR)
                 sys.exit()  # TODO: change to adequate exit
 
             _logger.debug("*RST")
@@ -62,7 +70,8 @@ class HVManager(HardwareManager):
             await asyncio.sleep(1.0)
             _logger.debug("CONF:VOLT:DC 10,0.00001")
             self.__agilent.write(  # type: ignore
-                "CONF:VOLT:DC 10,0.00001")
+                "CONF:VOLT:DC 10,0.00001"
+            )
             await asyncio.sleep(1)
             _logger.debug("DET:BAND 3")
             self.__agilent.write("DET:BAND 3")  # type: ignore
@@ -74,35 +83,35 @@ class HVManager(HardwareManager):
             self.__agilent.write("VOLT:NPLC 100")  # type: ignore
             await asyncio.sleep(1)
 
-            _logger.debug('Agilent 34401A initialization done')
+            _logger.debug("Agilent 34401A initialization done")
 
     async def __stop_agilent_34401a(self):
         if VIRTUAL_MODE:
-            _logger.debug('Virtual voltmeter stopped')
+            _logger.debug("Virtual voltmeter stopped")
         else:
             self.__agilent.read()  # type: ignore
-            _logger.debug('Agilent 34401A stopped')
+            _logger.debug("Agilent 34401A stopped")
 
     async def __init_fluke_5200e(self):
         if VIRTUAL_MODE:
-            _logger.debug('Initialize PS Calibrator in virtual mode')
+            _logger.debug("Initialize PS Calibrator in virtual mode")
 
             async def calc_next_voltage():
                 while True:
                     await asyncio.sleep(1)
                     sign = 1 if self.__V_set > self.V_last else -1
                     delta = abs(self.V_last - self.__V_set)
-                    self.V_last += sign * \
-                        min(VIRTUAL_CHANGE_SPEED, delta) + \
-                        (random() - 0.5)
+                    self.V_last += sign * min(VIRTUAL_CHANGE_SPEED, delta) + (
+                        random() - 0.5
+                    )
+
             self.__calc_next_coro = asyncio.create_task(calc_next_voltage())
         else:
-            _logger.debug('Initialize Fluke 5502E')
+            _logger.debug("Initialize Fluke 5502E")
             try:
                 self.__fluke = self.__visa_mgr.open_resource(FLUKE_ADDR)
             except visa.Error:
-                _logger.error('Couldn\'t connect to \'%s\', exiting now...',
-                              FLUKE_ADDR)
+                _logger.error("Couldn't connect to '%s', exiting now...", FLUKE_ADDR)
                 sys.exit()  # TODO: change to adequate exit
 
             _logger.debug("OPER")
@@ -116,17 +125,17 @@ class HVManager(HardwareManager):
             if self.__calc_next_coro:
                 self.__calc_next_coro.cancel()
                 self.__calc_next_coro = None
-            _logger.debug('Virtual PS Calibrator stopped')
+            _logger.debug("Virtual PS Calibrator stopped")
         else:
             # TODO: добавить вычитку(чтобы вольтметр не пищал при перезапуске)
-            _logger.debug('Fluke 5502E stopped')
+            _logger.debug("Fluke 5502E stopped")
 
     async def __set_voltage(self, voltage: float):
         if VIRTUAL_MODE:
             self.__V_set = voltage
             await asyncio.sleep(2)
         else:
-            self.__fluke.write(f'OUT {scale(voltage)} V')  # type: ignore
+            self.__fluke.write(f"OUT {scale(voltage)} V")  # type: ignore
             await asyncio.sleep(2)
 
     async def __get_voltage(self) -> float:
@@ -134,7 +143,7 @@ class HVManager(HardwareManager):
             await asyncio.sleep(4)
             return self.V_last
         else:
-            self.__agilent.write('READ?')  # type: ignore
+            self.__agilent.write("READ?")  # type: ignore
             await asyncio.sleep(4)
             voltage = float(self.__agilent.read())  # type: ignore
             return voltage * DIVIDER_FACTOR
@@ -146,43 +155,55 @@ class HVManager(HardwareManager):
             await asyncio.sleep(1)
 
     async def __process_single_command(self, meta: dict):
-        if meta['command_type'] == 'set_voltage':
-            voltage = float(meta['voltage'])
-            _logger.debug('setting %s', voltage)
+        if meta["command_type"] == "set_voltage":
+            voltage = float(meta["voltage"])
+            _logger.debug("setting %s", voltage)
             await self.__set_voltage(voltage)
-            self.output.publish(dict(meta=dict(
-                type="answer",
-                answer_type='set_voltage',
-                block="1",
-                status="ok"
-            ), data=b''))
-        elif meta['command_type'] == 'set_voltage_and_check':
-            voltage = float(meta['voltage'])
-            max_error = float(meta['max_error'])
-            timeout_ = float(meta['timeout'])
-            _logger.debug('setting %s', voltage)
+            self.output.publish(
+                dict(
+                    meta=dict(
+                        type="answer", answer_type="set_voltage", block="1", status="ok"
+                    ),
+                    data=b"",
+                )
+            )
+        elif meta["command_type"] == "set_voltage_and_check":
+            voltage = float(meta["voltage"])
+            max_error = float(meta["max_error"])
+            timeout_ = float(meta["timeout"])
+            _logger.debug("setting %s", voltage)
             await self.__set_voltage(voltage)
             try:
                 await asyncio.wait_for(
-                    self.__wait_voltage(
-                        voltage, max_error), timeout=timeout_)
-                self.output.publish(dict(meta=dict(
-                    type="answer",
-                    answer_type='set_voltage_and_check',
-                    block="1",
-                    status="ok",
-                    voltage=self.V_last,
-                    error=self.V_last - voltage
-                ), data=b''))
+                    self.__wait_voltage(voltage, max_error), timeout=timeout_
+                )
+                self.output.publish(
+                    dict(
+                        meta=dict(
+                            type="answer",
+                            answer_type="set_voltage_and_check",
+                            block="1",
+                            status="ok",
+                            voltage=self.V_last,
+                            error=self.V_last - voltage,
+                        ),
+                        data=b"",
+                    )
+                )
             except asyncio.exceptions.TimeoutError:
-                self.output.publish(dict(meta=dict(
-                    type="answer",
-                    answer_type='set_voltage_and_check',
-                    block="1",
-                    status="timeout",
-                    voltage=self.V_last,
-                    error=self.V_last - voltage
-                ), data=b''))
+                self.output.publish(
+                    dict(
+                        meta=dict(
+                            type="answer",
+                            answer_type="set_voltage_and_check",
+                            block="1",
+                            status="timeout",
+                            voltage=self.V_last,
+                            error=self.V_last - voltage,
+                        ),
+                        data=b"",
+                    )
+                )
         else:
             _logger.debug(meta)
 
@@ -199,44 +220,60 @@ class HVManager(HardwareManager):
             try:
                 message = await self.input.get()
                 _logger.debug(message)
-                meta = message['meta']
+                meta = message["meta"]
                 try:
                     jsonschema.validate(meta, self.__schema)
                     if self.__cmd_coro is None or self.__cmd_coro.done():
                         temp_coro = self.__cmd_coro
                         self.__cmd_coro = asyncio.create_task(
-                            self.__process_single_command(meta))
+                            self.__process_single_command(meta)
+                        )
                         if temp_coro is not None:
                             exc = temp_coro.exception()
                             if exc:
                                 raise exc
                     else:
-                        self.output.publish(dict(meta=dict(
-                            type="reply",
-                            reply_type="error",
-                            error_code=8,
-                            error_text_code="SERVER_BUSY_ERROR",
-                            description="HV server is busy",
-                        ), data=b''))
+                        self.output.publish(
+                            dict(
+                                meta=dict(
+                                    type="reply",
+                                    reply_type="error",
+                                    error_code=8,
+                                    error_text_code="SERVER_BUSY_ERROR",
+                                    description="HV server is busy",
+                                ),
+                                data=b"",
+                            )
+                        )
                 except jsonschema.ValidationError as err:
-                    self.output.publish(dict(meta=dict(
-                        type="reply",
-                        reply_type="error",
-                        error_code=9,
-                        error_text_code="INCORRECT_MESSAGE_PARAMS",
-                        description=err.message
-                    ), data=b''))
+                    self.output.publish(
+                        dict(
+                            meta=dict(
+                                type="reply",
+                                reply_type="error",
+                                error_code=9,
+                                error_text_code="INCORRECT_MESSAGE_PARAMS",
+                                description=err.message,
+                            ),
+                            data=b"",
+                        )
+                    )
             except asyncio.CancelledError as exc:
                 raise exc
             # pylint: disable-next=broad-except
             except Exception as exc:
-                self.output.publish(dict(meta=dict(
-                    type="reply",
-                    reply_type="error",
-                    error_code=5,
-                    error_text_code="ALGORITM_ERROR",
-                    description=repr(exc)
-                ), data=b''))
+                self.output.publish(
+                    dict(
+                        meta=dict(
+                            type="reply",
+                            reply_type="error",
+                            error_code=5,
+                            error_text_code="ALGORITM_ERROR",
+                            description=repr(exc),
+                        ),
+                        data=b"",
+                    )
+                )
                 _logger.exception(exc)
 
     async def __monitor_voltage(self):
@@ -244,25 +281,35 @@ class HVManager(HardwareManager):
             try:
                 while True:
                     voltage = await self.__get_voltage()
-                    _logger.debug('curr: %f', voltage)
+                    _logger.debug("curr: %f", voltage)
                     self.V_last = voltage
-                    self.output.publish(dict(meta=dict(
-                            type='answer',
-                            answer_type='get_voltage',
-                            block=1,
-                            voltage=voltage
-                    ), data=b''))
+                    self.output.publish(
+                        dict(
+                            meta=dict(
+                                type="answer",
+                                answer_type="get_voltage",
+                                block=1,
+                                voltage=voltage,
+                            ),
+                            data=b"",
+                        )
+                    )
             except asyncio.CancelledError as exc:
                 raise exc
             # pylint: disable-next=broad-except
             except Exception as exc:
-                self.output.publish(dict(meta=dict(
-                    type="reply",
-                    reply_type="error",
-                    error_code=5,
-                    error_text_code="ALGORITM_ERROR",
-                    description=repr(exc)
-                ), data=b''))
+                self.output.publish(
+                    dict(
+                        meta=dict(
+                            type="reply",
+                            reply_type="error",
+                            error_code=5,
+                            error_text_code="ALGORITM_ERROR",
+                            description=repr(exc),
+                        ),
+                        data=b"",
+                    )
+                )
                 _logger.exception(exc)
 
     async def start(self):

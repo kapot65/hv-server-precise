@@ -1,5 +1,6 @@
-class Hub():
+class Hub:
     """Simple pubsub hub"""
+
     def __init__(self):
         self.subscriptions = set()
 

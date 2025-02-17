@@ -1,4 +1,5 @@
 """Коннектор DataForge TCP/IP потока к :class:`utils.manager.HardwareManager`."""
+
 import asyncio
 from logging import getLogger
 
@@ -7,10 +8,10 @@ import dfparser
 from config import LOGGER_NAME
 from utils.manager import HardwareManager
 
+
 async def socket_handler(
-        reader: asyncio.StreamReader,
-        writer: asyncio.StreamWriter,
-        mgr: HardwareManager):
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, mgr: HardwareManager
+):
     """Обработчик соединения TCP для :class:`utils.manager.HardwareManager`
 
     Функция предназначена для использования с :func:`asyncio.start_server`
@@ -29,16 +30,16 @@ async def socket_handler(
     """
     log = getLogger(LOGGER_NAME)
 
-    peername = writer.get_extra_info('peername')
-    log.debug('Connection from %s', peername)
+    peername = writer.get_extra_info("peername")
+    log.debug("Connection from %s", peername)
 
     subcription = asyncio.Queue()
 
     async def process_output():
         while True:
             message = await subcription.get()
-            meta = message['meta']
-            data = message['data']
+            meta = message["meta"]
+            data = message["data"]
 
             writer.write(dfparser.create_message(meta, data))
             await writer.drain()
@@ -46,7 +47,7 @@ async def socket_handler(
     mgr.output.subscriptions.add(subcription)
     output_coro = asyncio.create_task(process_output())
 
-    buffer = b''
+    buffer = b""
 
     while not writer.is_closing() and not reader.at_eof():
         buffer += await reader.read(1024)
@@ -54,6 +55,6 @@ async def socket_handler(
         for message in messages:
             await mgr.input.put(message)
 
-    log.debug('Connection from %s closed', peername)
+    log.debug("Connection from %s closed", peername)
     output_coro.cancel()
     mgr.output.subscriptions.remove(subcription)
