@@ -3,8 +3,10 @@ import asyncio
 
 from utils.hub import Hub
 
+
 class HardwareManager():
     """Class for hardware logic class."""
+
     def __init__(self):
         self._input = asyncio.Queue()
         self._output = Hub()

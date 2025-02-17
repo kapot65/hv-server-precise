@@ -2,9 +2,9 @@
 import logging
 from config import LOG_FILE, LOG_LEVEL, LOGGER_NAME
 
+
 def init_logger() -> None:
     """Initialize HV server logger."""
-
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(LOG_LEVEL)
 

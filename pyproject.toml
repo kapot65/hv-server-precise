@@ -1,0 +1,30 @@
+[project]
+name = "hv-server-precise"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.11.12",
+    "asyncio>=3.4.3",
+    "dfparser",
+    "dftcp>=0.0.3",
+    "jsonschema>=4.23.0",
+    "pandas>=2.2.3",
+    "pexpect>=4.9.0",
+    "plotly>=6.0.0",
+    "pysimplegui>=5.0.8",
+    "pyvisa>=1.14.1",
+    "tqdm>=4.67.1",
+]
+
+[tool.uv.sources]
+dfparser = { git = "https://github.com/kapot65/python-df-parser" }
+
+[dependency-groups]
+dev = [
+    "ipython>=8.32.0",
+    "mypy>=1.15.0",
+    "pycodestyle>=2.12.1",
+    "pydocstyle>=6.3.0",
+]

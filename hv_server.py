@@ -1,6 +1,5 @@
 """Скрипт запуска сервера стойки HV."""
 import asyncio
-from asyncio.log import logger
 from functools import partial
 from logging import getLogger
 
@@ -27,7 +26,7 @@ if __name__ == "__main__":
             TCP_INTERFACE_HOST, TCP_INTERFACE_PORT)
         )
     _logger.info(
-        "Start TCP/IP interface on %s:%i", 
+        "Start TCP/IP interface on %s:%i",
         TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
     )
     ws_server = loop.run_until_complete(init_web(manager))
