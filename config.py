@@ -1,12 +1,11 @@
 """Конфигурационный файл для сервера HV."""
 
+import os
 from logging import DEBUG as _DEBUG
 
 LOGGER_NAME: str = "hv_server"
 LOG_FILE: str = "./hv_server.log"
 LOG_LEVEL = _DEBUG
-
-DATA_ROOT: str = "./data"
 
 VIRTUAL_MODE: bool = True
 VIRTUAL_CHANGE_SPEED: int = (
@@ -27,6 +26,13 @@ TCP_INTERFACE_PORT: int = 5555
 
 WEB_INTERFACE_HOST: str = "0.0.0.0"
 WEB_INTERFACE_PORT: int = 8080
+
+# Корень проекта (используется для обрезки абсолютных путей в логах)
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+# Путь к локальной базе данных медленного контроля
+LOCAL_DB_ROOT: str = "./data"
+
 
 # переписывание параметров из локального конфига (config_local.py)
 try:

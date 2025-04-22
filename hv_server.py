@@ -5,6 +5,7 @@ from functools import partial
 from logging import getLogger
 
 from config import LOGGER_NAME, TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
+from db import TSVDBWriter
 from hv_manager import HVManager
 from utils.logger import init_logger
 from utils.transport.socket import socket_handler
@@ -13,7 +14,10 @@ from utils.transport.websocket import init_web
 if __name__ == "__main__":
     init_logger(LOGGER_NAME)
     _logger = getLogger(LOGGER_NAME)
-    manager = HVManager()
+
+    __db_writer = TSVDBWriter("HV")
+
+    manager = HVManager(__db_writer)
 
     loop = asyncio.new_event_loop()
 

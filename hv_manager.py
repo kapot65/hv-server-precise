@@ -4,6 +4,7 @@ import asyncio
 import json
 import sys
 from logging import getLogger
+from typing import Optional
 
 import jsonschema
 
@@ -19,6 +20,7 @@ from config import (
 from config import (
     FLUKE_5502E_GPIB_ADDR as FLUKE_ADDR,
 )
+from db import TSVDBWriter
 from utils.manager import HardwareManager
 from utils.scale import rescale_voltage as scale
 
@@ -33,10 +35,11 @@ _logger = getLogger(LOGGER_NAME)
 class HVManager(HardwareManager):
     """Менеджер для управления стойкой HV."""
 
-    def __init__(self):
+    def __init__(self, db_writer: Optional[TSVDBWriter] = None):
         """Инициализация менеджера."""
         super().__init__()
 
+        self.__db_writer = db_writer
         self.__schema = json.load(open("./commands.schema.json"))
 
         if VIRTUAL_MODE:
@@ -283,6 +286,8 @@ class HVManager(HardwareManager):
                     voltage = await self.__get_voltage()
                     _logger.debug("curr: %f", voltage)
                     self.V_last = voltage
+                    if self.__db_writer is not None:
+                        self.__db_writer.write(float("{:.2f}".format(voltage)))
                     self.output.publish(
                         dict(
                             meta=dict(
