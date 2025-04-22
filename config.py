@@ -1,11 +1,12 @@
 """Конфигурационный файл для сервера HV."""
 
 import os
-from logging import DEBUG as _DEBUG
+from logging import DEBUG as _DEBUG, INFO
 
 LOGGER_NAME: str = "hv_server"
 LOG_FILE: str = "./hv_server.log"
-LOG_LEVEL = _DEBUG
+LOG_LEVEL_FILE = INFO # уровень логирования для файла
+LOG_LEVEL_CLI = _DEBUG # уровень логирования для консоли
 
 VIRTUAL_MODE: bool = True
 VIRTUAL_CHANGE_SPEED: int = (
