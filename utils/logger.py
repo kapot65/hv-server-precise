@@ -1,8 +1,17 @@
 """HV server logging module."""
 
 import logging
+import os
 
-from config import LOG_FILE, LOG_LEVEL
+from config import LOG_FILE, LOG_LEVEL, PROJECT_ROOT
+
+
+class RelativePathFormatter(logging.Formatter):
+    def format(self, record):
+        pathname = record.pathname
+        if pathname.startswith(PROJECT_ROOT):
+            record.pathname = os.path.relpath(pathname, PROJECT_ROOT)
+        return super().format(record)
 
 
 def init_logger(logger_name: str) -> None:
@@ -16,8 +25,7 @@ def init_logger(logger_name: str) -> None:
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(LOG_LEVEL)
 
-    fmt = "[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s"
-    formatter = logging.Formatter(fmt)
+    formatter = RelativePathFormatter("%(asctime)s %(levelname)s %(pathname)s:%(lineno)d - %(message)s")
     file_handler.setFormatter(formatter)
     stream_handler.setFormatter(formatter)
 
