@@ -1,15 +1,21 @@
 """Скрипт запуска сервера стойки HV."""
 
+import os
 import asyncio
 from functools import partial
 from logging import getLogger
 
-from config import LOGGER_NAME, TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
+from config import LOGGER_NAME, TCP_INTERFACE_HOST, TCP_INTERFACE_PORT, DB_SYNC_COMMAND, DB_SYNC_INTERVAL
 from db import DailyTsvWriter
 from hv_manager import HVManager
 from utils.logger import init_logger
 from utils.transport.socket import socket_handler
 from utils.transport.websocket import init_web
+
+async def sync_db_loop(cmd: str, interval: float):
+    os.system(cmd)
+    await asyncio.sleep(interval)
+
 
 if __name__ == "__main__":
     init_logger(LOGGER_NAME)
@@ -20,6 +26,10 @@ if __name__ == "__main__":
     manager = HVManager(__db_writer)
 
     loop = asyncio.new_event_loop()
+
+    __sync_db_loop = None
+    if DB_SYNC_COMMAND:
+        __sync_db_loop = loop.create_task(sync_db_loop(DB_SYNC_COMMAND, DB_SYNC_INTERVAL))
 
     loop.run_until_complete(manager.start())
 
@@ -38,8 +48,16 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         _logger.info("Programm stoped by user input")
 
+    # Синхронизация базы данных перед завершением программы
+    if DB_SYNC_COMMAND:
+        __sync_db_loop.cancel()
+        _logger.info("Syncing database with remote storage")
+        os.system(DB_SYNC_COMMAND)
+        _logger.info("Database synced successfully")
+
     loop.run_until_complete(manager.stop())
     server.close()
     loop.run_until_complete(server.wait_closed())
     if ws_server:
         loop.run_until_complete(ws_server.stop())
+    

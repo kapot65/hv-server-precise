@@ -34,6 +34,10 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 # Путь к локальной базе данных медленного контроля
 LOCAL_DB_ROOT: str = "./data"
 
+# Команда для синхронизации базы данных с удаленным хранилищем
+# None - программа сама не синхронизирует данные
+DB_SYNC_COMMAND: str|None = f"rclone copy {LOCAL_DB_ROOT} ./test-db"
+DB_SYNC_INTERVAL: int = 3600 * 2  # Интервал синхронизации базы данных в секундах
 
 # переписывание параметров из локального конфига (config_local.py)
 try:
