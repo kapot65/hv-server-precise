@@ -20,7 +20,7 @@ from config import (
 from config import (
     FLUKE_5502E_GPIB_ADDR as FLUKE_ADDR,
 )
-from db import TSVDBWriter
+from db import DailyTsvWriter
 from utils.manager import HardwareManager
 from utils.scale import rescale_voltage as scale
 
@@ -35,7 +35,7 @@ _logger = getLogger(LOGGER_NAME)
 class HVManager(HardwareManager):
     """Менеджер для управления стойкой HV."""
 
-    def __init__(self, db_writer: Optional[TSVDBWriter] = None):
+    def __init__(self, db_writer: Optional[DailyTsvWriter] = None):
         """Инициализация менеджера."""
         super().__init__()
 

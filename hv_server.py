@@ -5,7 +5,7 @@ from functools import partial
 from logging import getLogger
 
 from config import LOGGER_NAME, TCP_INTERFACE_HOST, TCP_INTERFACE_PORT
-from db import TSVDBWriter
+from db import DailyTsvWriter
 from hv_manager import HVManager
 from utils.logger import init_logger
 from utils.transport.socket import socket_handler
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     init_logger(LOGGER_NAME)
     _logger = getLogger(LOGGER_NAME)
 
-    __db_writer = TSVDBWriter("HV")
+    __db_writer = DailyTsvWriter("HV")
 
     manager = HVManager(__db_writer)
 
