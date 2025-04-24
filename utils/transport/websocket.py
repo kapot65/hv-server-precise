@@ -24,7 +24,6 @@ async def __websocket_handler(request, mgr: HardwareManager):
             try:
                 message = await subcription.get()
                 meta = message["meta"]
-                print(json.dumps(meta))
                 await ws_res.send_str(json.dumps(meta))
             except asyncio.CancelledError as exc:
                 raise exc

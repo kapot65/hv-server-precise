@@ -99,7 +99,7 @@ class DailyTsvWriter:
         # Если файл не открыт (например, из-за ошибки выше), выходим
         if not self.file_handle:
             self.__logger.error(
-                f"File handle is None, cannot write to {self.current_filepath}"
+                f"file handle is None, cannot write to {self.current_filepath}"
             )
             return
 
@@ -123,15 +123,14 @@ class DailyTsvWriter:
         if self.file_handle:
             try:
                 self.file_handle.close()
-                print(f"Файл {self.current_filepath} закрыт.")
+                self.__logger.debug(f"db file {self.current_filepath} closed")
             except IOError as e:
-                print(f"Ошибка при закрытии файла {self.current_filepath}: {e}")
+                self.__logger.error(f"failed to close file {self.current_filepath}: {e}")
             self.file_handle = None
         self.current_date = None  # Сбрасываем дату при закрытии
 
     def __del__(self):
         """Гарантирует закрытие файла при удалении объекта сборщиком мусора."""
-        # print("Вызван __del__, закрытие файла...") # Для отладки
         self.close()
 
     def __enter__(self):
@@ -140,5 +139,4 @@ class DailyTsvWriter:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Гарантирует закрытие файла при выходе из блока 'with'."""
-        # print("Вызван __exit__, закрытие файла...") # Для отладки
         self.close()
