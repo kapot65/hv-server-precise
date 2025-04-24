@@ -13,8 +13,9 @@ from utils.transport.socket import socket_handler
 from utils.transport.websocket import init_web
 
 async def sync_db_loop(cmd: str, interval: float):
-    os.system(cmd)
-    await asyncio.sleep(interval)
+    while True:
+        os.system(cmd)
+        await asyncio.sleep(interval)
 
 
 if __name__ == "__main__":
