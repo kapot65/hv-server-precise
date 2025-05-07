@@ -3,7 +3,7 @@ import os
 from logging import getLogger
 from pathlib import Path
 
-from config import LOCAL_DB_ROOT, LOGGER_NAME
+from config import LOCAL_DB_ROOT, LOGGER_NAME, VIRTUAL_MODE
 
 
 class DailyTsvWriter:
@@ -42,7 +42,10 @@ class DailyTsvWriter:
     def _get_filepath(self, date_obj: datetime.date) -> Path:
         """Формирует полный путь к файлу для указанной даты."""
         date_str = date_obj.strftime("%y-%m-%d")  # Формат гг-мм-дд
-        return self.base_path / f"{date_str}.tsv"
+        if VIRTUAL_MODE:
+            return self.base_path / f"{date_str}-virtual.tsv"
+        else:
+            return self.base_path / f"{date_str}.tsv"
 
     def write(self, val: float):
         """
